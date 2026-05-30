@@ -58,90 +58,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Clone official repository
-        shell: bash
-        run: |
-          REPO="${{ github.event.inputs.repo || 'AmadeusITGroup/prompt-registry' }}"
-          git clone https://github.com/${REPO}.git prompt-registry
-          cd prompt-registry
-          
-          if [ "${{ github.event_name }}" = "release" ]; then
-            git checkout ${{ github.event.release.tag_name }}
-          elif [ -n "${{ github.event.inputs.branch }}" ]; then
-            git checkout "${{ github.event.inputs.branch }}"
-          else
-            git checkout main
-          fi
-      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '24'
 
-      - name: Detect package manager and install dependencies
-        working-directory: prompt-registry
-        shell: bash
-        run: |
-          if [ -f "pnpm-lock.yaml" ]; then
-            echo "Using pnpm"
-            corepack enable pnpm
-            pnpm install
-            echo "PACKAGE_MANAGER=pnpm" >> $GITHUB_ENV
-          elif [ -f "package-lock.json" ]; then
-            echo "Using npm"
-            npm ci
-            echo "PACKAGE_MANAGER=npm" >> $GITHUB_ENV
-          else
-            echo "No lockfile found, running npm install"
-            npm install
-            echo "PACKAGE_MANAGER=npm" >> $GITHUB_ENV
-          fi
+      - name: Setup pnpm
+        run: corepack enable && corepack prepare pnpm@11.5.0 --activate
 
-      - name: Build CLI
-        working-directory: prompt-registry
+      - name: Build CLI and SEA binary
         shell: bash
         run: |
-          if [ "${{ env.PACKAGE_MANAGER }}" = "pnpm" ]; then
-            pnpm --filter @prompt-registry/cli run build
-          else
-            cd packages/cli && npm run build
+          REPO="${{ github.event.inputs.repo || 'AmadeusITGroup/prompt-registry' }}"
+          BRANCH="${{ github.event.inputs.branch || '' }}"
+          
+          if [ "${{ github.event_name }}" = "release" ]; then
+            BRANCH="${{ github.event.release.tag_name }}"
           fi
-
-      - name: Build SEA binary
-        shell: bash
-        working-directory: prompt-registry/packages/cli
-        run: |
-          if [ "${{ env.PACKAGE_MANAGER }}" = "pnpm" ]; then
-            pnpm run build:sea:local
-          else
-            npm run build:sea:local
-          fi
-
-      - name: Rename binary to gh extension naming
-        shell: bash
-        working-directory: prompt-registry/packages/cli
-        run: |
-          cd dist
-          # Find the generated binary (pattern: prompt-registry-<platform>-<arch>)
-          for file in prompt-registry-*; do
-            if [[ "${{ matrix.platform }}" == windows-* ]]; then
-              if [[ "$file" == *.exe ]]; then
-                mv "$file" "${{ matrix.platform }}.exe"
-                mv "${file}.sha256" "${{ matrix.platform }}.exe.sha256"
-              fi
-            else
-              if [[ ! "$file" == *.sha256 ]]; then
-                mv "$file" "${{ matrix.platform }}"
-                mv "${file}.sha256" "${{ matrix.platform }}.sha256"
-              fi
-            fi
-          done
+          
+          ./scripts/build.sh --repo "$REPO" --ref "$BRANCH"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform }}
-          path: prompt-registry/packages/cli/dist/${{ matrix.platform }}*
+          path: .tmp/dist/*
 
   release:
     needs: build-binaries
@@ -162,6 +103,45 @@ jobs:
                 sha256sum "$file" >> SHA256SUMS.txt
               fi
             done
+          done
+      - name: Rename files to match platform names
+        run: |
+          cd dist
+          # Rename files in each subdirectory to match the directory name (platform)
+          for dir in */; do
+            platform="${dir%/}"
+            if [ -d "$dir" ]; then
+              for file in "$dir"*; do
+                if [ -f "$file" ]; then
+                  filename=$(basename "$file")
+                  # Determine new name based on platform
+                  if [[ "$platform" == windows-* ]]; then
+                    # Windows: add .exe if not present
+                    if [[ "$filename" != *.exe ]] && [[ "$filename" != *.sha256 ]]; then
+                      new_name="${platform}.exe"
+                    elif [[ "$filename" == *.sha256 ]]; then
+                      new_name="${platform}.exe.sha256"
+                    else
+                      new_name="${platform}.exe"
+                    fi
+                  else
+                    # Non-Windows: use platform name directly
+                    if [[ "$filename" == *.sha256 ]]; then
+                      new_name="${platform}.sha256"
+                    else
+                      new_name="$platform"
+                    fi
+                  fi
+                  # Skip if new name equals old name
+                  if [[ "$filename" != "$new_name" ]]; then
+                    mv "$file" "${dir}${new_name}"
+                    echo "Renamed: $filename -> $new_name"
+                  else
+                    echo "Skipping: $filename (already matches platform name)"
+                  fi
+                fi
+              done
+            fi
           done
       - name: Upload release assets
         env:
