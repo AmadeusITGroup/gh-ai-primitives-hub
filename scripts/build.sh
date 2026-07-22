@@ -1,20 +1,21 @@
 #!/bin/bash
 set -e
 
-# Build script for gh-prompt-registry sidecar repository
-# This script clones the official prompt-registry repository and builds CLI binaries
+# Build script for gh-ai-primitives-hub sidecar repository
+# This script clones the official ai-primitives-hub repository and builds CLI binaries
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(dirname "$SCRIPT_DIR")"
-OFFICIAL_REPO_URL=https://github.com/AmadeusITGroup/prompt-registry.git
-OFFICIAL_REPO_DIR="$REPO_DIR/prompt-registry"
+OFFICIAL_REPO_URL=https://github.com/AmadeusITGroup/ai-primitives-hub.git
+OFFICIAL_REPO_DIR="$REPO_DIR/ai-primitives-hub"
 
 # Parse arguments
-REF="${PROMPT_REGISTRY_REF:-}"
+REF="${AI_PRIMITIVES_HUB_REF:-${PROMPT_REGISTRY_REF:-}}"
 LOCAL=false
 PLATFORM=""
-LOCAL_REPO="${PROMPT_REGISTRY_REPO:-}"
+LOCAL_REPO="${AI_PRIMITIVES_HUB_REPO:-${PROMPT_REGISTRY_REPO:-}}"
 REPO_OVERRIDE=""
+SKIP_GIT=false
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -64,7 +65,7 @@ if [ -n "$LOCAL_REPO" ]; then
     echo "Using local directory: $OFFICIAL_REPO_DIR"
     SKIP_GIT=true
   elif [[ "$LOCAL_REPO" == http://* ]] || [[ "$LOCAL_REPO" == https://* ]] || [[ "$LOCAL_REPO" == git@* ]]; then
-    OFFICIAL_REPO_DIR="$REPO_DIR/prompt-registry"
+    OFFICIAL_REPO_DIR="$REPO_DIR/ai-primitives-hub"
     OFFICIAL_REPO_URL="$LOCAL_REPO"
     echo "Using remote repository: $OFFICIAL_REPO_URL"
   else
@@ -95,7 +96,13 @@ else
   # Checkout specific ref if provided
   if [ -n "$REF" ]; then
     echo "Checking out ref: $REF"
-    git checkout "origin/$REF" -b "$REF"
+    if git show-ref --verify --quiet "refs/tags/$REF"; then
+      git checkout "tags/$REF"
+    elif git ls-remote --exit-code --heads origin "$REF" > /dev/null 2>&1; then
+      git checkout -B "$REF" "origin/$REF"
+    else
+      git checkout "$REF"
+    fi
   else
     echo "Checking out latest tag..."
     LATEST_TAG=$(git describe --tags --abbrev=0)
@@ -120,10 +127,14 @@ pnpm run build:sea:local
 # Rename binaries to gh extension naming convention
 echo "Renaming binaries to gh extension naming convention..."
 cd "$OFFICIAL_REPO_DIR/packages/cli/dist"
-for file in prompt-registry-*; do
+for file in ai-primitives-hub-* prompt-registry-*; do
   if [ -f "$file" ]; then
     # Rename to OS-ARCH[.exe] (extension name is inferred from repo name)
-    new_name="${file#prompt-registry-}"
+    if [[ "$file" == ai-primitives-hub-* ]]; then
+      new_name="${file#ai-primitives-hub-}"
+    else
+      new_name="${file#prompt-registry-}"
+    fi
     mv "$file" "$new_name"
     echo "Renamed: $file -> $new_name"
   fi

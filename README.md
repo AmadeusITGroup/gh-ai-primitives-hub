@@ -1,31 +1,31 @@
-# gh-prompt-registry
+# gh-ai-primitives-hub
 
-GitHub CLI extension for the Prompt Registry CLI tool.
+GitHub CLI extension for the AI Primitives Hub CLI tool.
 
 ## Purpose
 
-This is a **sidecar repository** that builds and distributes the Prompt Registry CLI as a GitHub CLI extension. The main Prompt Registry repository is at [AmadeusITGroup/prompt-registry](https://github.com/AmadeusITGroup/prompt-registry).
+This is a **sidecar repository** that builds and distributes the AI Primitives Hub CLI as a GitHub CLI extension. The main AI Primitives Hub repository is at [AmadeusITGroup/ai-primitives-hub](https://github.com/AmadeusITGroup/ai-primitives-hub).
 
 ## Installation
 
 ```bash
-gh extension install AmadeusITGroup/gh-prompt-registry
+gh extension install AmadeusITGroup/gh-ai-primitives-hub
 ```
 
 ## Usage
 
 ```bash
 # Show help
-gh prompt-registry --help
+gh ai-primitives-hub --help
 
 # Validate collections
-gh prompt-registry collection validate
+gh ai-primitives-hub collection validate
 
 # Build bundles
-gh prompt-registry bundle build
+gh ai-primitives-hub bundle build
 
 # Install bundles
-gh prompt-registry install
+gh ai-primitives-hub install
 ```
 
 ## Development
@@ -56,21 +56,22 @@ make clean
 ./scripts/build.sh --local
 
 # Build using local repository (with environment variable)
-PROMPT_REGISTRY_REPO=/path/to/prompt-registry ./scripts/build.sh --local
+AI_PRIMITIVES_HUB_REPO=/path/to/ai-primitives-hub ./scripts/build.sh --local
 
 # Build using local repository with specific ref (with environment variables)
-PROMPT_REGISTRY_REPO=/path/to/prompt-registry PROMPT_REGISTRY_REF=v1.0.4 ./scripts/build.sh --local
+AI_PRIMITIVES_HUB_REPO=/path/to/ai-primitives-hub AI_PRIMITIVES_HUB_REF=v1.0.4 ./scripts/build.sh --local
 
 # Build using remote repository with specific branch (with environment variables)
-PROMPT_REGISTRY_REPO=https://github.com/user/prompt-registry.git PROMPT_REGISTRY_REF=main ./scripts/build.sh --local
+AI_PRIMITIVES_HUB_REPO=https://github.com/user/ai-primitives-hub.git AI_PRIMITIVES_HUB_REF=main ./scripts/build.sh --local
 
 # Build using local repository (with command-line flag)
-./scripts/build.sh --local --local-repo /path/to/prompt-registry
+./scripts/build.sh --local --local-repo /path/to/ai-primitives-hub
 ```
 
 **Environment Variables:**
-- `PROMPT_REGISTRY_REPO` - Path or URL to prompt-registry repository (overrides cloning from GitHub)
-- `PROMPT_REGISTRY_REF` - Git ref (tag or branch) to checkout (defaults to latest tag if not specified)
+- `AI_PRIMITIVES_HUB_REPO` - Path or URL to ai-primitives-hub repository (overrides cloning from GitHub)
+- `AI_PRIMITIVES_HUB_REF` - Git ref (tag or branch) to checkout (defaults to latest tag if not specified)
+- Legacy aliases remain supported: `PROMPT_REGISTRY_REPO` and `PROMPT_REGISTRY_REF`
 
 **Note:** The SEA (Single Executable Application) build process is now implemented in the new monorepo structure. The build produces standalone binaries for all platforms.
 
@@ -81,13 +82,13 @@ PROMPT_REGISTRY_REPO=https://github.com/user/prompt-registry.git PROMPT_REGISTRY
 make build-local
 
 # Install as local extension (requires SEA binaries)
-gh extension install ./gh-prompt-registry-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)
+gh extension install ./gh-ai-primitives-hub-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)
 
 # Test the extension
-gh prompt-registry --help
+gh ai-primitives-hub --help
 
 # Uninstall when done
-gh extension remove gh-prompt-registry
+gh extension remove gh-ai-primitives-hub
 ```
 
 ## Binary Naming Convention
@@ -105,12 +106,12 @@ windows-amd64.exe
 windows-arm64.exe
 ```
 
-The extension name is inferred from the repository name (`gh-prompt-registry`), not part of the binary filename.
+The extension name is inferred from the repository name (`gh-ai-primitives-hub`), not part of the binary filename.
 
 ## Release Process
 
 Releases are automated via GitHub Actions:
-1. Create a release in the main Prompt Registry repository
+1. Create a release in the main AI Primitives Hub repository
 2. This repository's workflow triggers on the release
 3. Binaries are built for all platforms using SEA (Single Executable Application)
 4. Binaries are renamed to gh extension naming convention
@@ -120,7 +121,7 @@ Releases are automated via GitHub Actions:
 ## Repository Structure
 
 ```
-gh-prompt-registry/
+gh-ai-primitives-hub/
 ├── .github/
 │   └── workflows/
 │       └── release.yml          # CI/CD for building and releasing
@@ -132,4 +133,4 @@ gh-prompt-registry/
 
 ## License
 
-MIT License - see the main Prompt Registry repository for details.
+MIT License - see the main AI Primitives Hub repository for details.
