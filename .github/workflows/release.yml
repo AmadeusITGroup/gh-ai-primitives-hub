@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       repo:
-        description: 'Repository to clone (default: AmadeusITGroup/prompt-registry)'
+        description: 'Repository to clone (default: AmadeusITGroup/ai-primitives-hub)'
         required: false
-        default: 'AmadeusITGroup/prompt-registry'
+        default: 'AmadeusITGroup/ai-primitives-hub'
       branch:
         description: 'Branch or tag to checkout (default: latest tag)'
         required: false
@@ -69,7 +69,7 @@ jobs:
       - name: Build CLI and SEA binary
         shell: bash
         run: |
-          REPO="${{ github.event.inputs.repo || 'AmadeusITGroup/prompt-registry' }}"
+          REPO="${{ github.event.inputs.repo || 'AmadeusITGroup/ai-primitives-hub' }}"
           BRANCH="${{ github.event.inputs.branch || '' }}"
           
           if [ "${{ github.event_name }}" = "release" ]; then

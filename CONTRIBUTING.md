@@ -1,8 +1,8 @@
-# Contributing to gh-prompt-registry
+# Contributing to gh-ai-primitives-hub
 
 Thanks for contributing.
 
-This repository packages and distributes `prompt-registry` as a GitHub CLI extension.
+This repository packages and distributes `ai-primitives-hub` as a GitHub CLI extension.
 
 ## Ways to Contribute
 
@@ -11,7 +11,7 @@ This repository packages and distributes `prompt-registry` as a GitHub CLI exten
 3. Propose fixes that improve extension installation and runtime behavior.
 
 For feature and bug discussions in the core CLI, use the upstream repository:
-https://github.com/AmadeusITGroup/prompt-registry/issues
+https://github.com/AmadeusITGroup/ai-primitives-hub/issues
 
 ## Development Setup
 
@@ -25,9 +25,9 @@ https://github.com/AmadeusITGroup/prompt-registry/issues
 ### Clone and prepare
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/gh-prompt-registry.git
-cd gh-prompt-registry
-git remote add upstream https://github.com/AmadeusITGroup/gh-prompt-registry.git
+git clone https://github.com/YOUR_USERNAME/gh-ai-primitives-hub.git
+cd gh-ai-primitives-hub
+git remote add upstream https://github.com/AmadeusITGroup/gh-ai-primitives-hub.git
 ```
 
 ### Build and test locally
@@ -39,40 +39,40 @@ For a quick build using the official repository:
 make build-local
 
 # Install built extension locally
-gh extension install ./gh-prompt-registry
+gh extension install ./gh-ai-primitives-hub
 
 # On Windows, use the executable name instead
-# gh extension install ./gh-prompt-registry.exe
+# gh extension install ./gh-ai-primitives-hub.exe
 
 # Smoke test
-gh prompt-registry --help
+gh ai-primitives-hub --help
 
 # Cleanup local extension install when done
-gh extension remove gh-prompt-registry
+gh extension remove gh-ai-primitives-hub
 ```
 
 ### Build and test with your fork
 
-To develop against your own fork of prompt-registry:
+To develop against your own fork of ai-primitives-hub:
 
 ```bash
 # Create .env.local from the template
 cp .env.local.example .env.local
 
 # Edit .env.local with your fork details
-# REPO_URL="https://github.com/your-username/prompt-registry.git"
-# BRANCH="feature/your-branch"
+# AI_PRIMITIVES_HUB_REPO="https://github.com/your-username/ai-primitives-hub.git"
+# AI_PRIMITIVES_HUB_REF="feature/your-branch"
 
 # Build uses your fork automatically
 make build-local
 
 # Install and test
-gh extension install ./gh-prompt-registry
-gh prompt-registry --help
-gh extension remove gh-prompt-registry
+gh extension install ./gh-ai-primitives-hub
+gh ai-primitives-hub --help
+gh extension remove gh-ai-primitives-hub
 
 # Or use CLI arguments directly:
-./scripts/build.sh --repo-url "https://github.com/your-username/prompt-registry.git" --branch "feature/your-branch" --local
+./scripts/build.sh --repo "your-username/ai-primitives-hub" --ref "feature/your-branch" --local
 ```
 
 The `.env.local` file is git-ignored, so it won't be committed. This is useful for persistent local configuration across builds.

@@ -10,22 +10,22 @@ REPO_DIR="$(dirname "$SCRIPT_DIR")"
 
 cd "$REPO_DIR"
 
-# Clean slate: remove existing prompt-registry directory before build
-echo "Cleaning slate: removing existing prompt-registry directory..."
-rm -rf "$REPO_DIR/prompt-registry"
+# Clean slate: remove existing cloned repository directory before build
+echo "Cleaning slate: removing existing ai-primitives-hub directory..."
+rm -rf "$REPO_DIR/ai-primitives-hub"
 
 # Unique temp file using PID to avoid race conditions
-TEMP_FILE="/tmp/gh-prompt-registry-node-version.$$"
+TEMP_FILE="/tmp/gh-ai-primitives-hub-node-version.$$"
 
 # Disable corepack download prompt for non-interactive CI parity
 export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 
 # Cleanup function to restore environment on exit/interrupt
 cleanup() {
-  # Clean up prompt-registry directory if requested
+  # Clean up cloned repository directory if requested
   if [ "${CLEAN_AFTER_BUILD:-false}" = "true" ]; then
-    echo "Cleaning up prompt-registry directory..."
-    rm -rf "$REPO_DIR/prompt-registry"
+    echo "Cleaning up ai-primitives-hub directory..."
+    rm -rf "$REPO_DIR/ai-primitives-hub"
   fi
 
   # Restore Node version
@@ -71,7 +71,7 @@ else
   echo "pnpm already available at $(pnpm --version)"
 fi
 
-# Validate pnpm version matches packageManager field (if in prompt-registry dir)
+# Validate pnpm version matches packageManager field (if in repository dir)
 if [ -f "package.json" ]; then
   EXPECTED_PNPM=$(grep -o '"packageManager": "pnpm@[^"]*"' package.json 2>/dev/null | cut -d@ -f2 || echo "")
   if [ -n "$EXPECTED_PNPM" ]; then
@@ -85,19 +85,24 @@ fi
 
 # Call the original build script with all arguments
 # Set default remote repo and branch for CI parity testing
-DEFAULT_REPO="AmadeusITGroup/prompt-registry"
-PROMPT_REGISTRY_REPO="${PROMPT_REGISTRY_REPO:-$DEFAULT_REPO}"
-PROMPT_REGISTRY_REF="${PROMPT_REGISTRY_REF:-main}"
+DEFAULT_REPO="AmadeusITGroup/ai-primitives-hub"
+AI_PRIMITIVES_HUB_REPO="${AI_PRIMITIVES_HUB_REPO:-${PROMPT_REGISTRY_REPO:-$DEFAULT_REPO}}"
+AI_PRIMITIVES_HUB_REF="${AI_PRIMITIVES_HUB_REF:-${PROMPT_REGISTRY_REF:-main}}"
 
 # Convert owner/repo format to full GitHub URL if needed
 # Skip conversion for absolute paths
-if [[ "$PROMPT_REGISTRY_REPO" == */* ]] && [[ ! "$PROMPT_REGISTRY_REPO" == /* ]] && [[ ! "$PROMPT_REGISTRY_REPO" == http://* ]] && [[ ! "$PROMPT_REGISTRY_REPO" == https://* ]] && [[ ! "$PROMPT_REGISTRY_REPO" == git@* ]]; then
-  PROMPT_REGISTRY_REPO="https://github.com/$PROMPT_REGISTRY_REPO"
+if [[ "$AI_PRIMITIVES_HUB_REPO" == */* ]] && [[ ! "$AI_PRIMITIVES_HUB_REPO" == /* ]] && [[ ! "$AI_PRIMITIVES_HUB_REPO" == http://* ]] && [[ ! "$AI_PRIMITIVES_HUB_REPO" == https://* ]] && [[ ! "$AI_PRIMITIVES_HUB_REPO" == git@* ]]; then
+  AI_PRIMITIVES_HUB_REPO="https://github.com/$AI_PRIMITIVES_HUB_REPO"
 fi
 
+PROMPT_REGISTRY_REPO="$AI_PRIMITIVES_HUB_REPO"
+PROMPT_REGISTRY_REF="$AI_PRIMITIVES_HUB_REF"
+
+export AI_PRIMITIVES_HUB_REPO
+export AI_PRIMITIVES_HUB_REF
 export PROMPT_REGISTRY_REPO
 export PROMPT_REGISTRY_REF
-echo "Using repository: $PROMPT_REGISTRY_REPO"
-echo "Using branch/ref: $PROMPT_REGISTRY_REF"
+echo "Using repository: $AI_PRIMITIVES_HUB_REPO"
+echo "Using branch/ref: $AI_PRIMITIVES_HUB_REF"
 
 ./scripts/build.sh "$@"

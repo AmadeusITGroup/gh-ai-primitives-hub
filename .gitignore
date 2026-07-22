@@ -1,9 +1,10 @@
 # Temporary clone of official repository during build
+ai-primitives-hub/
 prompt-registry/
 
 # Local development environment overrides
 .env.local
-gh-prompt-registry
+gh-ai-primitives-hub
 linux-amd64
 linux-arm64
 darwin-amd64
