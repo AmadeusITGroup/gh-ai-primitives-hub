@@ -111,12 +111,30 @@ The extension name is inferred from the repository name (`gh-ai-primitives-hub`)
 ## Release Process
 
 Releases are automated via GitHub Actions:
-1. Create a release in the main AI Primitives Hub repository
-2. This repository's workflow triggers on the release
+1. Publish a prerelease in **this repository** with a tag that exists in the upstream AI Primitives Hub repository, or manually dispatch the workflow with `create_release` and `tag_name`
+2. The workflow resolves the upstream source once and pins all builds to that commit
 3. Binaries are built for all platforms using SEA (Single Executable Application)
 4. Binaries are renamed to gh extension naming convention
 5. Checksums are generated
-6. Assets are uploaded to the release
+6. Assets and upstream release notes are uploaded to the sidecar release; prereleases are then promoted to stable releases, while manually created releases remain drafts
+
+Release notes use the matching upstream tag's published release body when available.
+If the source has no release notes, the workflow generates a commit changelog from
+the preceding reachable upstream tag (or the full history for a first release).
+Every release includes a link to the exact upstream source commit. Existing sidecar
+release bodies are replaced, so GitHub-generated notes from this proxy repository
+are not retained.
+
+Manual runs can select a different source using `repo` and `branch` (a branch, tag,
+or commit); `tag_name` names only the sidecar release. Without `branch`, the latest
+reachable upstream tag is used. A release event in the upstream repository does
+not itself trigger this repository's workflow.
+
+To run release-note regression tests without building binaries:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
 
 ## Repository Structure
 
