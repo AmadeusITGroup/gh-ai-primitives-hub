@@ -32,7 +32,38 @@ permissions:
   contents: write
 
 jobs:
+  resolve-source:
+    runs-on: ubuntu-latest
+    outputs:
+      repo: ${{ steps.source.outputs.repo }}
+      ref: ${{ steps.source.outputs.ref }}
+      sha: ${{ steps.source.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.inputs.repo || 'AmadeusITGroup/ai-primitives-hub' }}
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.event.inputs.branch || '' }}
+          fetch-depth: 0
+      - name: Resolve upstream source
+        id: source
+        env:
+          SOURCE_REPO: ${{ github.event.inputs.repo || 'AmadeusITGroup/ai-primitives-hub' }}
+          SOURCE_REF: ${{ github.event_name == 'release' && github.event.release.tag_name || github.event.inputs.branch || '' }}
+        run: |
+          if [ -z "$SOURCE_REF" ]; then
+            SOURCE_REF=$(git describe --tags --abbrev=0)
+            SOURCE_SHA=$(git rev-parse "$SOURCE_REF^{commit}")
+          else
+            SOURCE_SHA=$(git rev-parse HEAD)
+          fi
+          {
+            echo "repo=${SOURCE_REPO:?}"
+            echo "ref=$SOURCE_REF"
+            echo "sha=$SOURCE_SHA"
+          } >> "$GITHUB_OUTPUT"
+
   build-binaries:
+    needs: resolve-source
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -68,15 +99,11 @@ jobs:
 
       - name: Build CLI and SEA binary
         shell: bash
+        env:
+          SOURCE_REPO: ${{ needs.resolve-source.outputs.repo }}
+          SOURCE_SHA: ${{ needs.resolve-source.outputs.sha }}
         run: |
-          REPO="${{ github.event.inputs.repo || 'AmadeusITGroup/ai-primitives-hub' }}"
-          BRANCH="${{ github.event.inputs.branch || '' }}"
-          
-          if [ "${{ github.event_name }}" = "release" ]; then
-            BRANCH="${{ github.event.release.tag_name }}"
-          fi
-          
-          ./scripts/build.sh --repo "$REPO" --ref "$BRANCH"
+          ./scripts/build.sh --repo "$SOURCE_REPO" --ref "$SOURCE_SHA"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -85,11 +112,23 @@ jobs:
           path: .tmp/dist/*
 
   release:
-    needs: build-binaries
+    needs: [resolve-source, build-binaries]
     if: ${{ github.event.inputs.create_release == 'true' || github.event_name == 'release' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ needs.resolve-source.outputs.repo }}
+          ref: ${{ needs.resolve-source.outputs.sha }}
+          fetch-depth: 0
+          path: ai-primitives-hub
+      - name: Generate upstream release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE_REPO: ${{ needs.resolve-source.outputs.repo }}
+          SOURCE_REF: ${{ needs.resolve-source.outputs.ref }}
+        run: bash scripts/generate-release-notes.sh ai-primitives-hub "$SOURCE_REPO" "$SOURCE_REF" > release-notes.md
       - uses: actions/download-artifact@v4
         with:
           path: dist/
@@ -170,6 +209,7 @@ jobs:
           
           # Upload files from subdirectories
           find dist -type f -exec gh release upload "$VERSION" {} --clobber \;
+          gh release edit "$VERSION" --notes-file release-notes.md
           if [ "${{ github.event_name }}" = "release" ]; then
             gh release edit "$VERSION" --prerelease=false --latest
           fi
